@@ -22,7 +22,7 @@ let time = (amt, unit) =>
 
 export default time;`,
   redisKeyGen: `export default function redisKeyGen(app, service, id, purpose) {
-  const parts = [app || 'scafe', service];
+  const parts = [app || 'serviceName', service];
   if (id?.length) parts.push(id);
   if (purpose?.length) parts.push(purpose);
   return parts.join(':');
@@ -349,39 +349,4 @@ const mailRepository = {
 
 export default mailRepository;
 `,
-};
-
-export const installScript = `// Install required modules for your microservice
-// Run this script with: node install-modules.js
-
-import { execSync } from "child_process";
-
-const modules = [
-  "express",
-  "cors",
-  "dotenv",
-  "winston",
-  "jsonwebtoken",
-  "qrcode",
-  "bcrypt",
-  "bullmq",
-  "nodemailer",
-  "ioredis"
-];
-
-console.log("\nInstalling required modules...\n");
-
-try {
-  execSync('npm install ' + modules.join(' '), { stdio: 'inherit' });
-  console.log("\nAll modules installed successfully!\n");
-} catch (err) {
-  console.error("\nError installing modules:", err);
-}
-`;
-
-// Export all as a single default object for compatibility
-export default {
-  utils,
-  server,
-  mail,
 };
