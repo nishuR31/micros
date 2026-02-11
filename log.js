@@ -1,4 +1,4 @@
-const log = (text) => {
-  console.log(`\n${text}\n`);
+const log = (...text) => {
+  console.log(`\n${text,join(" ")}\n`);
 };
 export default log;

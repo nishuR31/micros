@@ -20,13 +20,6 @@ import {{ execSync }} from "child_process";
 import path from "path";
 /* Self-destruct switch: set to true to delete installer after run, false to keep it */
 const selfDestruct = ${selfDestruct};
-console.log("Installing modules for ${serviceName}...");
-try {
-  execSync("npm install", {{ stdio: "inherit" }});
-  console.log("Modules installed.");
-} catch (e) {
-  console.error("Install failed:", e.message);
-}
 if (selfDestruct) {
   process.on("SIGINT", () => {
     try {
@@ -48,16 +41,18 @@ if (selfDestruct) {
 async function main() {
   const rootDir = process.cwd();
   await packageJson();
-  const chalkMod = await importModule("chalk");
+  const chalkMod = await importModule("chalk", true);
   const chalk = chalkMod.default;
-  const readlineMod = await importModule("node:readline");
+  const readlineMod = await importModule("node:readline", true);
   const readline = readlineMod.default;
   let rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
   function ask(question) {
-    return new Promise((resolve) => rl.question(chalk.cyan(question), (answer) => resolve(answer)));
+    return new Promise((resolve) =>
+      rl.question(chalk.cyan(question), (answer) => resolve(answer)),
+    );
   }
   log(chalk.green("Microservice Boilerplate Generator"));
   // Step 1: Prompt for package.json and modules
@@ -67,18 +62,12 @@ async function main() {
   for (let i = 0; i < numServices; i++) {
     serviceNames.push((await ask(`Name for service #${i + 1}: `)) + "Service");
   }
-  const multiDb = (await ask("Use multiple databases? (y/n): ")).toLowerCase() === "y";
-  let dbType = "";
-  if (multiDb) {
-    const dbCount = Number.parseInt((await ask("How many databases? (default 1): ")) || "1");
-    for (let i = 0; i < dbCount; i++) {
-      const dbPrompt = "Database #" + (i + 1) + " name (e.g. postgres, mongodb): ";
-      dbType = await ask(dbPrompt); // Use last entered DB as dbType
-    }
-  } else {
-    dbType = await ask("Database name: (eg: mongodb) ");
+  const multiDb =
+    (await ask("Use  database? (y/n): ")).toLowerCase() === "y";
+  if (multiDb) { modules.push("prisma","@prisma/client")
   }
-  const useRedis = (await ask("Use Redis for caching? (y/n): ")).toLowerCase() === "y";
+  const useRedis =
+    (await ask("Use Redis for caching? (y/n): ")).toLowerCase() === "y";
   if (useRedis) {
     modules.push("ioredis");
   }
@@ -86,37 +75,66 @@ async function main() {
   for (const name of serviceNames) {
     const serviceDir = path.join(rootDir, name);
     try {
-      fs.mkdirSync(serviceDir);
-      ["config", "controller", "middleware", "routes", "repo", "src", "utils"].forEach((folder) => {
-        fs.mkdirSync(path.join(serviceDir, folder));
+      if (!fs.existsSync(serviceDir)) {
+        fs.mkdirSync(serviceDir);
+        log(`→ Created directory: ${serviceDir}`);
+      } else {
+        log(`→ Directory exists: ${serviceDir}`);
+      }
+      [
+        "config",
+        "controller",
+        "middleware",
+        "routes",
+        "repo",
+        "src",
+        "utils",
+      ].forEach((folder) => {
+        const folderPath = path.join(serviceDir, folder);
+        if (!fs.existsSync(folderPath)) {
+          fs.mkdirSync(folderPath);
+          log(`   ↳ Created folder: ${folderPath}`);
+        } else {
+          log(`   ↳ Folder exists: ${folderPath}`);
+        }
       });
-      let readme = "# " + name + " service";
-      if (multiDb)
-        readme += "\n\nThis service is configured for multiple databases. See config/dbs.js.";
-      if (useRedis)
-        readme +=
-          "\n\nThis service uses Redis for caching. See config/redis.js and utils/cache.js.";
-      fs.writeFileSync(path.join(serviceDir, "README.md"), readme);
-      fs.writeFileSync(
-        path.join(serviceDir, "schema.prisma"),
-        "// Prisma schema for " + name + " (" + dbType + ")",
-      );
+      const schemaPath = path.join(serviceDir, "schema.prisma");
+      if (!fs.existsSync(schemaPath)) {
+        fs.writeFileSync(schemaPath, "// Prisma schema\n");
+        log(`   ↳ Created file: ${schemaPath}`);
+      } else {
+        log(`   ↳ File exists: ${schemaPath}`);
+      }
       const sharedService = path.join("./sharedService", "utils");
-      fs.writeFileSync(sharedService + "/time.js", codeUtils.time);
-      fs.writeFileSync(sharedService + "/qr.js", codeUtils.qr);
-      fs.writeFileSync(sharedService + "/handler.js", codeUtils.handler);
-      fs.writeFileSync(sharedService + "/jwt.js", codeUtils.jwt);
-      fs.writeFileSync(sharedService + "/logger.js", codeUtils.logger);
-      fs.writeFileSync(path.join(sharedService, "crypto.js"), codeUtils.crypto);
-      fs.writeFileSync(path.join(sharedService, "cookieOptions.js"), codeUtils.cookieOptions);
-      fs.writeFileSync(path.join(sharedService, "codes.js"), codeUtils.codes);
-      fs.writeFileSync(
-        path.join(sharedService, "asyncHandler.js"),
-        "const asyncHandler = (func) => (req, res, next) => Promise.resolve(func(req, res, next)).catch(next);\nexport default asyncHandler;\n",
-      );
-      log(chalk.blueBright(`Created service ${name}`));
+      const sharedFiles = [
+        ["/time.js", codeUtils.time],
+        ["/qr.js", codeUtils.qr],
+        ["/handler.js", codeUtils.handler],
+        ["/jwt.js", codeUtils.jwt],
+        ["/logger.js", codeUtils.logger],
+        ["/crypto.js", codeUtils.crypto],
+        ["/cookieOptions.js", codeUtils.cookieOptions],
+        ["/codes.js", codeUtils.codes],
+        [
+          "/asyncHandler.js",
+          "const asyncHandler = (func) => (req, res, next) => Promise.resolve(func(req, res, next)).catch(next);\nexport default asyncHandler;\n",
+        ],
+      ];
+      for (const [file, data] of sharedFiles) {
+        const filePath =
+          file.startsWith("/") ?
+            sharedService + file
+          : path.join(sharedService, file);
+        if (!fs.existsSync(filePath)) {
+          fs.writeFileSync(filePath, data || "");
+          log(`   ↳ Created shared util: ${filePath}`);
+        } else {
+          log(`   ↳ Shared util exists: ${filePath}`);
+        }
+      }
+      log(`✔ Service ready: ${name}`);
     } catch (err) {
-      log(chalk.red(`Error creating service ${name} : ${err.message}`));
+      log(chalk.red(`✖ Error creating service ${name} : ${err.message}`));
     }
   }
   log(chalk.green("\nBoilerplate generated in " + rootDir));
@@ -141,21 +159,20 @@ async function main() {
   devModules.push(...["morgan", "nodemon", "prettier"]);
   // Only install actual npm packages, not DB names
   log("Removing duplicate modules if any...");
-  modules = [...new Set(...modules)];
-  devModules = [...new Set(...devModules)];
+  modules = [...new Set(modules)];
+  devModules = [...new Set(devModules)];
   log("Adding prettierrc");
   prettier();
   log("Adding dependencies...");
-    await importModule(module.join(" "));
-  
+  for(let mod of modules){await importModule(mod)};
+
   log("Adding dev dependencies...");
-    await importModule(module.join(" "));
-  
+  for(let mod of devModules){await importModule(mod)};
 
   log("Installing gitignore");
   gitignore();
   log("Adding env file for ease of access...");
-  fs.writeFileSync(".env");
+  fs.writeFileSync(".env","add ports, URIs for databse, redis and tokens");
 
   try {
     process.chdir(rootDir);
