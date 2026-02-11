@@ -45,6 +45,7 @@ const packageJson = handler(async (pkgPath, pkgData = {}) => {
   let attempts = 0;
   while (!success && attempts < 3) {
     try {
+        console.log("Getting your package.json\n")
       execSync("npm init -y", { cwd: dir, stdio: "inherit" });
       // Read, update, and write package.json
       const pkg = JSON.parse(fs.readFileSync(pkgPathFile, "utf8"));
