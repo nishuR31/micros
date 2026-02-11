@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import fs, { read } from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import packageJson from "./package.js";
 import importModule from "./importModule.js";
@@ -8,35 +8,12 @@ import log from "./log.js";
 import { utils as codeUtils } from "./codeBase.js";
 import prettier from "./prettier.js";
 import gitignore from "./gitignore.js";
+import destroy from "./destroy.js";
 
 let modules = [];
 let serviceNames = ["sharedService"];
 let devModules = [];
-
-function generateInstallerScript(serviceName, selfDestruct = false) {
-  return `#!/usr/bin/env node
-import fs from "fs";
-import {{ execSync }} from "child_process";
-import path from "path";
-/* Self-destruct switch: set to true to delete installer after run, false to keep it */
-const selfDestruct = ${selfDestruct};
-if (selfDestruct) {
-  process.on("SIGINT", () => {
-    try {
-      fs.unlinkSync(import.meta.url.replace('file://', ''));
-      console.log("Installer deleted on SIGINT.");
-    } catch (e) {}
-    process.exit();
-  });
-  try {
-    fs.unlinkSync(import.meta.url.replace('file://', ''));
-    console.log("Installer deleted after install.");
-  } catch (e) {}
-} else {
-  console.log("Self-destruct is off: installer not deleted.");
-}
-`;
-}
+let completed = false;
 
 async function main() {
   const rootDir = process.cwd();
@@ -62,9 +39,9 @@ async function main() {
   for (let i = 0; i < numServices; i++) {
     serviceNames.push((await ask(`Name for service #${i + 1}: `)) + "Service");
   }
-  const multiDb =
-    (await ask("Use  database? (y/n): ")).toLowerCase() === "y";
-  if (multiDb) { modules.push("prisma","@prisma/client")
+  const multiDb = (await ask("Use  database? (y/n): ")).toLowerCase() === "y";
+  if (multiDb) {
+    modules.push("prisma", "@prisma/client");
   }
   const useRedis =
     (await ask("Use Redis for caching? (y/n): ")).toLowerCase() === "y";
@@ -164,19 +141,38 @@ async function main() {
   log("Adding prettierrc");
   prettier();
   log("Adding dependencies...");
-  for(let mod of modules){await importModule(mod)};
+  for (let mod of modules) {
+    await importModule(mod);
+  }
 
   log("Adding dev dependencies...");
-  for(let mod of devModules){await importModule(mod)};
+  for (let mod of devModules) {
+    await importModule(mod);
+  }
 
   log("Installing gitignore");
   gitignore();
   log("Adding env file for ease of access...");
-  fs.writeFileSync(".env","add ports, URIs for databse, redis and tokens");
+  fs.writeFileSync(".env", "add ports, URIs for databse, redis and tokens");
 
   try {
     process.chdir(rootDir);
     log(chalk.green("Changed working directory to " + rootDir));
+    completed = true;
+    destroy(
+      [
+        "codeBase.js",
+        "gitignore.js",
+        "handler.js",
+        "importModule.js",
+        "log.js",
+        "package.js",
+        "prettier.js",
+        "README.md",
+      ],
+      true,
+      true,
+    );
   } catch (e) {
     log(chalk.red("Failed to change directory: " + e.message));
   }
