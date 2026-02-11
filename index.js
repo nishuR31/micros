@@ -158,7 +158,7 @@ async function main() {
   await Promise.all(devModules.map((mod) => importModule(mod)));
 
   log("Installing gitignore");
-  gitignore();
+  gitignore(rootDir);
   log("Adding env file for ease of access...");
   fs.writeFileSync(".env", "add ports, URIs for databse, redis and tokens");
 
@@ -166,7 +166,22 @@ async function main() {
     process.chdir(parentDir);
     log(chalk.green("Changed working directory to " + parentDir));
     completed = true;
-    destroy(["codeBase.js","gitignore.js","handler.js","importModule.js","index.js","LICENSE","log.js","package.js","prettier.js","README.md"],true,completed)
+    destroy(
+      [
+        "codeBase.js",
+        "gitignore.js",
+        "handler.js",
+        "importModule.js",
+        "index.js",
+        "LICENSE",
+        "log.js",
+        "package.js",
+        "prettier.js",
+        "README.md",
+      ],
+      true,
+      completed,
+    );
   } catch (e) {
     log(
       chalk.red(
