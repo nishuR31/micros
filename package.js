@@ -7,7 +7,7 @@ const readline = await import("node:readline");
 
 const ask = (rl, question, def) =>
   new Promise((resolve) => {
-    const prompt = def ? `${question} default:${def}: ` : `${question}: `;
+    const prompt = def ? `${question} [default:${def}]: ` : `${question}: `;
     rl.question(prompt, (ans) => resolve(ans || def));
   });
 
@@ -45,7 +45,7 @@ const packageJson = handler(async (pkgPath, pkgData = {}) => {
   let attempts = 0;
   while (!success && attempts < 3) {
     try {
-        console.log("Getting your package.json\n")
+        console.log("\nGetting your package.json ready\n")
       execSync("npm init -y", { cwd: dir, stdio: "inherit" });
       // Read, update, and write package.json
       const pkg = JSON.parse(fs.readFileSync(pkgPathFile, "utf8"));

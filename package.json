@@ -1,0 +1,37 @@
+{
+  "name": "micros",
+  "version": "1.0.0",
+  "description": "A microservice project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "microservices",
+    "javascript",
+    "typescript..."
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": "",
+  "homepage": "",
+  "github": "",
+  "script": {
+    "dev": "npx nodemon index.js",
+    "start": "node index.js",
+    "format": "npx prettier --format ."
+  },
+  "private": "true",
+  "files": [],
+  "contributors": [],
+  "engines": {},
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {},
+  "optionalDependencies": {},
+  "config": {},
+  "bin": "",
+  "directories": {}
+}
