@@ -1,12 +1,12 @@
 # Microservice Boilerplate Generator
 
-[![Stargazers](https://img.shields.io/github/stars/nishur31/micros?style=social)](https://github.com/nishur31/micros/stargazers)
-[![Issues](https://img.shields.io/github/issues/nishur31/micros)](https://github.com/nishur31/micros/issues)
-[![Forks](https://img.shields.io/github/forks/nishur31/micros)](https://github.com/nishur31/micros/network/members)
-[![Size](https://img.shields.io/github/repo-size/nishur31/micros)](https://github.com/nishur31/micros)
-[![License](https://img.shields.io/github/license/nishur31/micros)](https://github.com/nishur31/micros/blob/main/LICENSE)
+[![Stargazers](https://img.shields.io/github/stars/nishur31/micros?style=flat)](https://github.com/nishur31/micros/stargazers)
+[![Made With Javascript](https://img.shields.io/badge/Made%20with%20JavaScript-yellow?style=flat&color=black&logo=javascript)](https://www.javascript.com)
+[![Issues](https://img.shields.io/github/issues/nishur31/micros?style=flat)](https://github.com/nishur31/micros/issues)
+[![Forks](https://img.shields.io/github/forks/nishur31/micros?style=flat)](https://github.com/nishur31/micros/network/members)
+[![Size](https://img.shields.io/github/repo-size/nishur31/micros?style=flat)](https://github.com/nishur31/micros)
 
----
+
 
 ## Overview
 
