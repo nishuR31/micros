@@ -16,7 +16,7 @@ let devModules = [];
 let completed = false;
 
 async function main() {
-  const rootDir = process.cwd();
+  const parentDir = process.cwd();
   await packageJson();
   const chalkMod = await importModule("chalk", true);
   const chalk = chalkMod.default;
@@ -28,10 +28,21 @@ async function main() {
   });
   function ask(question, defaultAnswer = "y") {
     return new Promise((resolve) =>
-      rl.question(chalk.cyan(question), (answer) => resolve(answer || defaultAnswer)),
+      rl.question(chalk.cyan(question), (answer) =>
+        resolve(answer || defaultAnswer),
+      ),
     );
   }
   log(chalk.green("Microservice Boilerplate Generator"));
+  const projectName = await ask("Project name: ", "microservice");
+  const rootDir = path.join(path.dirname(process.cwd()), projectName);
+  if (!fs.existsSync(rootDir)) {
+    fs.mkdirSync(rootDir);
+    log(`→ Created project root: ${rootDir}`);
+  } else {
+    log(`→ Project root exists: ${rootDir}`);
+  }
+  process.chdir(rootDir);
   // Step 1: Prompt for package.json and modules
   // Step 2: Ask for services, DBs, config
   const numServices = Number.parseInt(await ask("How many microservices? "));
@@ -39,11 +50,13 @@ async function main() {
   for (let i = 0; i < numServices; i++) {
     serviceNames.push((await ask(`Name for service #${i + 1}: `)) + "Service");
   }
-  const multiDb = (await ask("Use database? (y/n): ", "y")).toLowerCase() === "y";
+  const multiDb =
+    (await ask("Use database? (y/n): ", "y")).toLowerCase() === "y";
   if (multiDb) {
     modules.push("prisma", "@prisma/client");
   }
-  const useRedis = (await ask("Use Redis for caching? (y/n): ", "y")).toLowerCase() === "y";
+  const useRedis =
+    (await ask("Use Redis for caching? (y/n): ", "y")).toLowerCase() === "y";
   if (useRedis) {
     modules.push("ioredis");
   }
@@ -57,7 +70,15 @@ async function main() {
       } else {
         log(`→ Directory exists: ${serviceDir}`);
       }
-      ["config", "controller", "middleware", "routes", "repo", "src", "utils"].forEach((folder) => {
+      [
+        "config",
+        "controller",
+        "middleware",
+        "routes",
+        "repo",
+        "src",
+        "utils",
+      ].forEach((folder) => {
         const folderPath = path.join(serviceDir, folder);
         if (!fs.existsSync(folderPath)) {
           fs.mkdirSync(folderPath);
@@ -89,8 +110,9 @@ async function main() {
         ],
       ];
       for (const [file, data] of sharedFiles) {
-        const filePath = file.startsWith("/")
-          ? sharedService + file
+        const filePath =
+          file.startsWith("/") ?
+            sharedService + file
           : path.join(sharedService, file);
         if (!fs.existsSync(filePath)) {
           fs.writeFileSync(filePath, data || "");
@@ -130,15 +152,10 @@ async function main() {
   devModules = [...new Set(devModules)];
   log("Adding prettierrc");
   prettier();
-  log("Adding dependencies...");
-  for (let mod of modules) {
-    await importModule(mod);
-  }
-
-  log("Adding dev dependencies...");
-  for (let mod of devModules) {
-    await importModule(mod);
-  }
+  log("Adding dependencies asynchronously...");
+  await Promise.all(modules.map((mod) => importModule(mod)));
+  log("Adding dev dependencies asynchronously...");
+  await Promise.all(devModules.map((mod) => importModule(mod)));
 
   log("Installing gitignore");
   gitignore();
@@ -146,25 +163,17 @@ async function main() {
   fs.writeFileSync(".env", "add ports, URIs for databse, redis and tokens");
 
   try {
-    process.chdir(rootDir);
-    log(chalk.green("Changed working directory to " + rootDir));
+    process.chdir(parentDir);
+    log(chalk.green("Changed working directory to " + parentDir));
     completed = true;
-    destroy(
-      [
-        "codeBase.js",
-        "gitignore.js",
-        "handler.js",
-        "importModule.js",
-        "log.js",
-        "package.js",
-        "prettier.js",
-        "README.md",
-      ],
-      true,
-      true,
-    );
+    fs.rmSync(parentDir, { recursive: true, force: true });
+    log(chalk.red(`Deleted project directory: ${parentDir}`));
   } catch (e) {
-    log(chalk.red("Failed to change directory: " + e.message));
+    log(
+      chalk.red(
+        "Failed to change directory or delete project dir: " + e.message,
+      ),
+    );
   }
   rl.close();
 }
