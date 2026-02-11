@@ -166,8 +166,7 @@ async function main() {
     process.chdir(parentDir);
     log(chalk.green("Changed working directory to " + parentDir));
     completed = true;
-    fs.rmSync(parentDir, { recursive: true, force: true });
-    log(chalk.red(`Deleted project directory: ${parentDir}`));
+    destroy(["codeBase.js","gitignore.js","handler.js","importModule.js","index.js","LICENSE","log.js","package.js","prettier.js","README.md"],true,completed)
   } catch (e) {
     log(
       chalk.red(
