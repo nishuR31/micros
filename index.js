@@ -153,14 +153,17 @@ async function main() {
   log("Adding prettierrc");
   prettier();
   log("Adding dependencies asynchronously...");
-  await Promise.all(modules.map((mod) => importModule(mod)));
+  await Promise.all(modules.map((mod) => importModule(mod, false, rootDir)));
   log("Adding dev dependencies asynchronously...");
-  await Promise.all(devModules.map((mod) => importModule(mod)));
+  await Promise.all(devModules.map((mod) => importModule(mod, false, rootDir)));
 
   log("Installing gitignore");
   gitignore(rootDir);
   log("Adding env file for ease of access...");
-  fs.writeFileSync(".env", "add ports, URIs for databse, redis and tokens");
+  fs.writeFileSync(
+    path.join(rootDir, ".env"),
+    "add ports, URIs for databse, redis and tokens",
+  );
 
   try {
     process.chdir(parentDir);
