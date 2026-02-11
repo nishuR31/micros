@@ -26,9 +26,9 @@ async function main() {
     input: process.stdin,
     output: process.stdout,
   });
-  function ask(question) {
+  function ask(question, defaultAnswer = "y") {
     return new Promise((resolve) =>
-      rl.question(chalk.cyan(question), (answer) => resolve(answer)),
+      rl.question(chalk.cyan(question), (answer) => resolve(answer || defaultAnswer)),
     );
   }
   log(chalk.green("Microservice Boilerplate Generator"));
@@ -39,12 +39,11 @@ async function main() {
   for (let i = 0; i < numServices; i++) {
     serviceNames.push((await ask(`Name for service #${i + 1}: `)) + "Service");
   }
-  const multiDb = (await ask("Use  database? (y/n): ")).toLowerCase() === "y";
+  const multiDb = (await ask("Use database? (y/n): ", "y")).toLowerCase() === "y";
   if (multiDb) {
     modules.push("prisma", "@prisma/client");
   }
-  const useRedis =
-    (await ask("Use Redis for caching? (y/n): ")).toLowerCase() === "y";
+  const useRedis = (await ask("Use Redis for caching? (y/n): ", "y")).toLowerCase() === "y";
   if (useRedis) {
     modules.push("ioredis");
   }
@@ -58,15 +57,7 @@ async function main() {
       } else {
         log(`→ Directory exists: ${serviceDir}`);
       }
-      [
-        "config",
-        "controller",
-        "middleware",
-        "routes",
-        "repo",
-        "src",
-        "utils",
-      ].forEach((folder) => {
+      ["config", "controller", "middleware", "routes", "repo", "src", "utils"].forEach((folder) => {
         const folderPath = path.join(serviceDir, folder);
         if (!fs.existsSync(folderPath)) {
           fs.mkdirSync(folderPath);
@@ -98,9 +89,8 @@ async function main() {
         ],
       ];
       for (const [file, data] of sharedFiles) {
-        const filePath =
-          file.startsWith("/") ?
-            sharedService + file
+        const filePath = file.startsWith("/")
+          ? sharedService + file
           : path.join(sharedService, file);
         if (!fs.existsSync(filePath)) {
           fs.writeFileSync(filePath, data || "");
